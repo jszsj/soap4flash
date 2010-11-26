@@ -23,13 +23,15 @@ package depth.soap.flash
 		public var nsWSDL:Namespace;
 		public var nsSOAP:Namespace;
 		public var nsSOAPENV:Namespace;
+		public var nsXMLSchema:Namespace;
 		public var targetNamespace:Namespace;
 
-		public function WebService(username:String=null, password:String=null, wsdlURI:String=null, service:String=null, port:String=null)
+		public function WebService(wsdlURI:String=null, service:String=null, port:String=null, username:String=null, password:String=null)
 		{
 			nsWSDL=new Namespace("http://schemas.xmlsoap.org/wsdl/");
 			nsSOAP=new Namespace("http://schemas.xmlsoap.org/wsdl/soap/");
-			nsSOAPENV=new Namespace("http://schemas.xmlsoap.org/soap/envelope/");
+			nsSOAPENV = new Namespace("http://schemas.xmlsoap.org/soap/envelope/");
+			nsXMLSchema = new Namespace("http://www.w3.org/2001/XMLSchema");
 			dispatcher=new EventDispatcher(this);
 
 			this.username=username;
@@ -220,7 +222,9 @@ package depth.soap.flash
 	     */
 	    override flash_proxy function callProperty(name:*, ... args:Array):*
 	    {
-			operations[name].send(args);
+			var operation:Operation = operations[name];
+			if (!operation) operation = getProperty(name);
+			operation.send(args);
 		}		
 
 		private var dispatcher:EventDispatcher;
