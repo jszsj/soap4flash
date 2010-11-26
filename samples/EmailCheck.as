@@ -40,8 +40,10 @@ package samples
 					case WebServiceEvent.RESULT:
 						//	content of soap response
 						trace(event.target.lastResult);
+						//or
+						trace(webService.VerifyEmail.lastResult);
 						//	accede to a specific value in the response
-						trace(event.target.lastResult.*::VerifyEmailResult.*::ResponseText);
+						trace(webService.VerifyEmail.lastResult.*::VerifyEmailResult.*::ResponseText);
 					break;
 					case WebServiceEvent.FAULT:
 						trace(event.target.lastResult);
@@ -49,5 +51,5 @@ package samples
 				}
 		}
 	}
-	
+
 }
