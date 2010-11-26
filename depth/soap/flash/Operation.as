@@ -19,6 +19,7 @@
 		public var nsWSDL:Namespace;
 		public var nsSOAP:Namespace;
 		public var nsSOAPENV:Namespace;
+		public var nsXMLSchema:Namespace;
 		public var targetNamespace:Namespace;
 		private var _params:XMLList;
 		private function get params():XMLList
@@ -27,8 +28,15 @@
 			{
 				var operationName:String = name;
 				var aInputMessage:Array = String(webService.wsdl.nsWSDL::portType.(@name==webService.portType).nsWSDL::operation.(@name==operationName).nsWSDL::input.@message).split(":",2);				 
-				var inputMessage:String = aInputMessage[aInputMessage.length-1];
-				_params = webService.wsdl.nsWSDL::message.(@name==inputMessage).nsWSDL::part.@name;
+				var inputMessage:String = aInputMessage[aInputMessage.length - 1];
+				
+				_params = webService.wsdl.nsWSDL::message.(@name == inputMessage).nsWSDL::part.@name;
+				if (params[0] == 'parameters') {
+					var element:XMLList = webService.wsdl.nsWSDL::message.(@name == inputMessage).nsWSDL::part.@element;
+					var elementNames:Array = element[0].split(":");
+					var elementName:String = elementNames[elementNames.length - 1];
+					_params = webService.wsdl..nsXMLSchema::element.(@name == elementName)..nsXMLSchema::element.@name;
+				}
 			}
 			return _params;
 		}
@@ -37,7 +45,8 @@
 		{
 			nsWSDL=webService.nsWSDL;
 			nsSOAP=webService.nsSOAP;
-			nsSOAPENV=webService.nsSOAPENV;
+			nsSOAPENV = webService.nsSOAPENV;
+			nsXMLSchema = webService.nsXMLSchema;
 			targetNamespace=webService.targetNamespace;
 			dispatcher=new EventDispatcher(this);
 			
@@ -81,17 +90,17 @@
 			var operationRequest:XML = new XML("<"+name+"/>");
 			operationRequest.setNamespace(targetNamespace);
 			soapRequest.nsSOAPENV::Body.appendChild(operationRequest);
-			for each(var paramValue:Object in args)
+			for each(var paramName:String in params)
 			{
-				var paramName:String = params[arrayIndex];
-				if(paramValue is XML) paramValue = paramValue.children(); 
+				var paramValue:* = args[arrayIndex];
+				if (!paramValue) paramValue = "";
 				operationRequest.appendChild(new XML("<"+paramName+">"+paramValue+"</"+paramName+">"));
 				arrayIndex++;
 			}
 			
 			if(webService.username != null && webService.password != null)
 			{
-				var securityHeader = <wsse:Security soapenv:mustUnderstand="0" 
+				var securityHeader:XML = <wsse:Security soapenv:mustUnderstand="0" 
 										xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" 
 										xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope">
 								         <wsse:UsernameToken wsu:Id="UsernameToken" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
@@ -106,7 +115,7 @@
 			request.method=URLRequestMethod.POST;
 			request.requestHeaders.push(new URLRequestHeader("SOAPAction", soapAction));
 			request.requestHeaders.push(new URLRequestHeader("Content-Type", "text/xml;charset=UTF-8"));
-			request.data=soapRequest;
+			request.data = soapRequest;
 			
 			var requestLoader:URLLoader = new URLLoader(request);
 			requestLoader.addEventListener(Event.COMPLETE, soapRequestHandler);
